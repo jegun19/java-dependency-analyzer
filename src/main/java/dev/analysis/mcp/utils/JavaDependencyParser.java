@@ -308,7 +308,14 @@ public class JavaDependencyParser {
                 return Optional.empty();
             }
             if (type.isArrayType()) {
-                return resolveTypeFqn(type.asArrayType().getComponentType());
+                Type component = type.asArrayType().getComponentType();
+                while (component.isArrayType()) {
+                    component = component.asArrayType().getComponentType();
+                }
+                if (component.isClassOrInterfaceType()) {
+                    return resolveTypeFqn(component.asClassOrInterfaceType());
+                }
+                return Optional.empty();
             }
             if (type.isClassOrInterfaceType()) {
                 return resolveTypeFqn(type.asClassOrInterfaceType());
