@@ -37,7 +37,7 @@ The server will:
 
 ## MCP Tools
 
-The server exposes three tools:
+The server exposes four tools:
 
 ### get_dependencies
 
@@ -50,6 +50,10 @@ Returns all classes that depend on a given class (reverse dependencies).
 ### trace_dependency_chain
 
 Traces a dependency path from one class to another.
+
+### all_classes
+
+Returns all classes discovered in the codebase.
 
 ## Example JSON-RPC Requests
 

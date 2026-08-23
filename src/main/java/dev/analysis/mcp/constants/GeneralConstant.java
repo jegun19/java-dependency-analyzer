@@ -22,6 +22,9 @@ public final class GeneralConstant {
     public static final String TOOL_TRACE_DEPENDENCY_CHAIN = "trace_dependency_chain";
     public static final String TOOL_TRACE_DEPENDENCY_CHAIN_DESC = "Trace a dependency path from one class to another";
 
+    public static final String TOOL_ALL_CLASSES = "all_classes";
+    public static final String TOOL_ALL_CLASSES_DESC = "Return all classes discovered in the codebase";
+
     public static final String PARAM_CLASS = "class";
     public static final String PARAM_FROM = "from";
     public static final String PARAM_TO = "to";
