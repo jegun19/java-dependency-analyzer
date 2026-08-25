@@ -20,9 +20,11 @@
     <jackson.version>2.17.2</jackson.version>
     <slf4j.version>2.0.16</slf4j.version>
     <junit.version>5.11.0</junit.version>
+    <mockito.version>5.18.0</mockito.version>
     <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
     <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
     <maven-shade-plugin.version>3.6.0</maven-shade-plugin.version>
+    <jacoco.version>0.8.15</jacoco.version>
   </properties>
 
   <dependencies>
@@ -67,6 +69,18 @@
       <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>${mockito.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <version>${mockito.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -105,6 +119,26 @@
             <configuration>
               <createDependencyReducedPom>false</createDependencyReducedPom>
             </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <executions>
+          <execution>
+            <id>prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>
