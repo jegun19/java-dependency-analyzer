@@ -8,9 +8,6 @@ import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
-import com.github.javaparser.resolution.declarations.ResolvedReferenceTypeDeclaration;
-import com.github.javaparser.resolution.types.ResolvedReferenceType;
-import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
@@ -219,15 +216,9 @@ public class JavaDependencyParser {
 
     private void parseFile(Path file, JavaParser parser, Set<DependencyEdge> edges) {
         try {
-            Optional<CompilationUnit> cuOpt = parser.parse(file).getResult();
-            if (cuOpt.isEmpty()) {
-                return;
-            }
-            processCompilationUnit(cuOpt.get(), edges);
+            parser.parse(file).getResult().ifPresent(cu -> processCompilationUnit(cu, edges));
         } catch (IOException e) {
             log.warn("Failed to read file {}: {}", file, e.getMessage());
-        } catch (Exception e) {
-            log.debug("Failed to parse {}: {}", file, e.getMessage());
         }
     }
 
@@ -268,7 +259,7 @@ public class JavaDependencyParser {
 
     private void addFieldDependencies(CompilationUnit cu, String sourceClass, Set<DependencyEdge> edges) {
         cu.findAll(FieldDeclaration.class).forEach(field -> {
-            Type t = field.getElementType();
+            Type t = field.getVariable(0).getType();
             resolveTypeFqn(t).ifPresent(to -> edges.add(new DependencyEdge(sourceClass, to)));
         });
     }
@@ -282,8 +273,7 @@ public class JavaDependencyParser {
 
     private Optional<String> extractMethodCallTarget(MethodCallExpr call) {
         try {
-            ResolvedMethodDeclaration resolved = call.resolve();
-            String to = resolved.declaringType().getQualifiedName();
+            String to = call.resolve().declaringType().getQualifiedName();
             return (to != null && !to.isBlank()) ? Optional.of(to) : Optional.empty();
         } catch (Exception e) {
             return Optional.empty();
@@ -292,46 +282,36 @@ public class JavaDependencyParser {
 
     private Optional<String> resolveDeclaredTypeFqn(ClassOrInterfaceDeclaration decl) {
         try {
-            ResolvedReferenceTypeDeclaration resolved = decl.resolve();
-            return Optional.ofNullable(resolved.getQualifiedName());
+            return Optional.ofNullable(decl.resolve().getQualifiedName());
         } catch (Exception e) {
-            log.debug("Symbol resolution failed for {}, using AST fallback: {}", decl.getNameAsString(), e.getMessage());
-            return decl.findCompilationUnit()
-                    .flatMap(cu -> cu.getPackageDeclaration())
-                    .map(pkg -> pkg.getNameAsString() + "." + decl.getNameAsString());
+            return Optional.empty();
         }
     }
 
     private Optional<String> resolveTypeFqn(Type type) {
-        try {
-            if (type.isPrimitiveType()) {
-                return Optional.empty();
-            }
-            if (type.isArrayType()) {
-                Type component = type.asArrayType().getComponentType();
-                while (component.isArrayType()) {
-                    component = component.asArrayType().getComponentType();
-                }
-                if (component.isClassOrInterfaceType()) {
-                    return resolveTypeFqn(component.asClassOrInterfaceType());
-                }
-                return Optional.empty();
-            }
-            if (type.isClassOrInterfaceType()) {
-                return resolveTypeFqn(type.asClassOrInterfaceType());
-            }
-            return Optional.empty();
-        } catch (Exception ignored) {
+        if (type.isPrimitiveType()) {
             return Optional.empty();
         }
+        if (type.isArrayType()) {
+            Type component = type.asArrayType().getComponentType();
+            while (component.isArrayType()) {
+                component = component.asArrayType().getComponentType();
+            }
+            if (component.isClassOrInterfaceType()) {
+                return resolveTypeFqn(component.asClassOrInterfaceType());
+            }
+            return Optional.empty();
+        }
+        if (type.isClassOrInterfaceType()) {
+            return resolveTypeFqn(type.asClassOrInterfaceType());
+        }
+        return Optional.empty();
     }
 
     private Optional<String> resolveTypeFqn(ClassOrInterfaceType type) {
         try {
-            ResolvedReferenceType r = type.resolve().asReferenceType();
-            return Optional.ofNullable(r.getQualifiedName());
+            return Optional.ofNullable(type.resolve().asReferenceType().getQualifiedName());
         } catch (Exception e) {
-            log.debug("Symbol resolution failed for type {}, using fallback", type.getNameAsString());
             return Optional.empty();
         }
     }

@@ -135,6 +135,15 @@ public class McpServerApplication {
                 null
         );
 
+        var noArgSchema = new McpSchema.JsonSchema(
+                GeneralConstant.SCHEMA_TYPE_OBJECT,
+                java.util.Map.of(),
+                List.of(),
+                null,
+                null,
+                null
+        );
+
         var getDepsTool = new McpServerFeatures.SyncToolSpecification(
                 new McpSchema.Tool(GeneralConstant.TOOL_GET_DEPENDENCIES, GeneralConstant.TOOL_GET_DEPENDENCIES_DESC, null, classSchema, null, null, null),
                 tools::getDependencies
@@ -150,6 +159,11 @@ public class McpServerApplication {
                 tools::traceDependencyChain
         );
 
-        return List.of(getDepsTool, getReverseDepsTool, traceChainTool);
+        var allClassesTool = new McpServerFeatures.SyncToolSpecification(
+                new McpSchema.Tool(GeneralConstant.TOOL_ALL_CLASSES, GeneralConstant.TOOL_ALL_CLASSES_DESC, null, noArgSchema, null, null, null),
+                tools::getAllClasses
+        );
+
+        return List.of(getDepsTool, getReverseDepsTool, traceChainTool, allClassesTool);
     }
 }

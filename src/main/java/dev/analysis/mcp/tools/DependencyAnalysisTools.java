@@ -104,6 +104,22 @@ public class DependencyAnalysisTools {
         return new McpSchema.CallToolResult(contents, false);
     }
 
+    /**
+     * Returns all classes discovered in the codebase.
+     *
+     * @param exchange the MCP server exchange context
+     * @param arguments tool arguments (none required)
+     * @return the tool result containing all class names
+     */
+    public McpSchema.CallToolResult getAllClasses(McpSyncServerExchange exchange, java.util.Map<String, Object> arguments) {
+        List<String> classes = graphService.allClasses().stream().sorted().toList();
+        List<McpSchema.Content> contents = new ArrayList<>();
+        for (String className : classes) {
+            contents.add(new McpSchema.TextContent(className));
+        }
+        return new McpSchema.CallToolResult(contents, false);
+    }
+
     private String extractString(java.util.Map<String, Object> map, String key) {
         Object value = map.get(key);
         if (value == null) {

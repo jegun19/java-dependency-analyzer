@@ -8,7 +8,6 @@ import java.util.Optional;
 import java.util.Set;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
-import org.jgrapht.alg.cycle.CycleDetector;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultEdge;
 
@@ -163,46 +162,6 @@ public class DependencyGraphService {
             return Optional.empty();
         }
         return Optional.of(Collections.unmodifiableList(new ArrayList<>(path.getVertexList())));
-    }
-
-    /**
-     * Detects all classes involved in circular dependencies.
-     *
-     * <p>This method uses a cycle detector to find all classes that are part of
-     * at least one circular dependency in the graph.</p>
-     *
-     * <h3>Example:</h3>
-     * <pre>{@code
-     * // Given: A -&gt; B -&gt; C -&gt; A (cycle)
-     * Set<String> cycles = service.detectCycles();
-     * // Returns: ["A", "B", "C"]
-     * }</pre>
-     *
-     * @return a set of class names that are part of dependency cycles
-     */
-    public Set<String> detectCycles() {
-        Graph<String, DefaultEdge> g = requireGraph();
-        return new CycleDetector<>(g).findCycles();
-    }
-
-    /**
-     * Checks if the graph contains the specified class.
-     *
-     * <p>This is a convenience method to check class existence before performing
-     * other queries to avoid unnecessary processing.</p>
-     *
-     * <h3>Example:</h3>
-     * <pre>{@-code
-     * if (service.hasClass("com.example.MyClass")) {
-     *     List<String> deps = service.getDependencies("com.example.MyClass");
-     * }
-     * }</pre>
-     *
-     * @param className the fully qualified class name
-     * @return true if the class exists in the graph, false otherwise
-     */
-    public boolean hasClass(String className) {
-        return requireGraph().containsVertex(className);
     }
 
     /**
