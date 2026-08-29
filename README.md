@@ -28,16 +28,27 @@ mvn -q package
 java -jar target/mcp-dependency-analyzer-0.0.1-SNAPSHOT.jar --repoPath=/path/to/java/repo
 ```
 
-The server will:
-
-- scan `*.java` files
-- parse dependencies using JavaParser with symbol solving
-- build a directed dependency graph using JGraphT
-- start a JSON-RPC loop reading from STDIN and writing to STDOUT
+The server starts its JSON-RPC loop immediately. It does not scan source files during startup.
+Run `index_project` when you want to build the in-memory dependency graph. The index is lost when
+the process stops; local persistence and incremental synchronization are planned separately.
 
 ## MCP Tools
 
-The server exposes four tools:
+The server exposes six tools:
+
+### index_project
+
+Builds the dependency graph for the active service context. It accepts optional `projectPath`,
+`contextId`, and `force` arguments. In this single-service release, supplied path and context
+values must match the startup `--repoPath`; set `force=true` to rebuild an already ready index.
+
+### index_status
+
+Returns JSON status for the active index, including `UNINDEXED`, `READY`, or `FAILED`, revision,
+timestamps, and file/node/edge counts.
+
+Before a successful `index_project` call, dependency-query tools return an actionable
+`PROJECT_NOT_INDEXED` error rather than empty results.
 
 ### get_dependencies
 
@@ -59,6 +70,10 @@ Returns all classes discovered in the codebase.
 
 ```json
 {"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_dependencies","arguments":{"class":"com.example.service.OrderService"}}}
+```
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"index_project","arguments":{"force":true}}}
 ```
 
 ```json
