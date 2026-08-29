@@ -25,16 +25,27 @@ public final class GeneralConstant {
     public static final String TOOL_ALL_CLASSES = "all_classes";
     public static final String TOOL_ALL_CLASSES_DESC = "Return all classes discovered in the codebase";
 
+    public static final String TOOL_INDEX_PROJECT = "index_project";
+    public static final String TOOL_INDEX_PROJECT_DESC = "Build or reuse the in-memory dependency index for the active service";
+
+    public static final String TOOL_INDEX_STATUS = "index_status";
+    public static final String TOOL_INDEX_STATUS_DESC = "Return readiness and statistics for the active service index";
+
     public static final String PARAM_CLASS = "class";
     public static final String PARAM_FROM = "from";
     public static final String PARAM_TO = "to";
+    public static final String PARAM_PROJECT_PATH = "projectPath";
+    public static final String PARAM_CONTEXT_ID = "contextId";
+    public static final String PARAM_FORCE = "force";
 
     public static final String SCHEMA_TYPE_OBJECT = "object";
     public static final String SCHEMA_TYPE_STRING = "string";
+    public static final String SCHEMA_TYPE_BOOLEAN = "boolean";
 
     public static final String ERROR_MISSING_CLASS_PARAM = "Missing required parameter: class";
     public static final String ERROR_MISSING_FROM_TO_PARAMS = "Missing required parameters: from, to";
     public static final String ERROR_GRAPH_NOT_INITIALIZED = "Dependency graph not initialized";
+    public static final String ERROR_PROJECT_NOT_INDEXED = "Project is not indexed. Run index_project first.";
 
     public static final String ARG_REPO_PATH_PREFIX = "--repoPath=";
     public static final String USAGE_MESSAGE = "Missing required argument --repoPath=/path/to/repo (or provide as first positional arg)";
