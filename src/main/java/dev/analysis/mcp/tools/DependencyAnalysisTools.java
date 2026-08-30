@@ -7,6 +7,7 @@ import dev.analysis.mcp.context.AnalysisContext;
 import dev.analysis.mcp.index.IndexOperationResult;
 import dev.analysis.mcp.index.IndexStatus;
 import dev.analysis.mcp.index.InMemoryIndexLifecycleService;
+import dev.analysis.mcp.sync.SyncLifecycleService;
 import dev.analysis.mcp.utils.DependencyGraphService;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema;
@@ -30,6 +31,7 @@ public class DependencyAnalysisTools {
 
     private final DependencyGraphService graphService;
     private final InMemoryIndexLifecycleService indexLifecycleService;
+    private final SyncLifecycleService syncLifecycleService;
 
     /**
      * Creates a new DependencyAnalysisTools instance.
@@ -37,15 +39,24 @@ public class DependencyAnalysisTools {
      * @param graphService the dependency graph service to query for analysis
      */
     public DependencyAnalysisTools(DependencyGraphService graphService) {
-        this(graphService, null);
+        this(graphService, null, null);
     }
 
     /** Creates tool handlers backed by the explicit in-memory index lifecycle. */
     public DependencyAnalysisTools(
             DependencyGraphService graphService,
             InMemoryIndexLifecycleService indexLifecycleService) {
+        this(graphService, indexLifecycleService, null);
+    }
+
+    /** Creates tool handlers with full sync lifecycle support. */
+    public DependencyAnalysisTools(
+            DependencyGraphService graphService,
+            InMemoryIndexLifecycleService indexLifecycleService,
+            SyncLifecycleService syncLifecycleService) {
         this.graphService = graphService;
         this.indexLifecycleService = indexLifecycleService;
+        this.syncLifecycleService = syncLifecycleService;
     }
 
     /**
@@ -177,7 +188,20 @@ public class DependencyAnalysisTools {
         if (indexLifecycleService == null) {
             return structuredError("INTERNAL_ERROR", "Index lifecycle is not configured.");
         }
-        return structuredSuccess(indexLifecycleService.status(), Map.of());
+        return structuredSuccess(indexLifecycleService.status(), Map.of(), stalenessWarnings());
+    }
+
+    /** Triggers synchronization of pending filesystem changes. */
+    public McpSchema.CallToolResult syncProject(McpSyncServerExchange exchange, Map<String, Object> arguments) {
+        McpSchema.CallToolResult contextError = validateActiveContext(arguments);
+        if (contextError != null) {
+            return contextError;
+        }
+        if (syncLifecycleService == null) {
+            return structuredError("INTERNAL_ERROR", "Sync lifecycle is not configured.");
+        }
+        syncLifecycleService.forceSync();
+        return structuredSuccess(indexLifecycleService.status(), Map.of("sync", "triggered"), stalenessWarnings());
     }
 
     private String extractString(java.util.Map<String, Object> map, String key) {
@@ -227,11 +251,17 @@ public class DependencyAnalysisTools {
     }
 
     private McpSchema.CallToolResult structuredSuccess(IndexStatus indexStatus, Map<String, Object> additionalData) {
+        return structuredSuccess(indexStatus, additionalData, List.of());
+    }
+
+    private McpSchema.CallToolResult structuredSuccess(IndexStatus indexStatus, Map<String, Object> additionalData, List<String> warnings) {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("indexState", indexStatus.state().name());
         data.put("revision", indexStatus.revision());
         data.put("startedAt", indexStatus.startedAt() == null ? null : indexStatus.startedAt().toString());
         data.put("completedAt", indexStatus.completedAt() == null ? null : indexStatus.completedAt().toString());
+        data.put("lastSyncAt", indexStatus.lastSyncAt() == null ? null : indexStatus.lastSyncAt().toString());
+        data.put("stale", syncLifecycleService != null && syncLifecycleService.hasPendingUpdates());
         data.put("lastError", indexStatus.lastError());
         if (indexStatus.statistics() != null) {
             data.put("fileCount", indexStatus.statistics().fileCount());
@@ -246,9 +276,16 @@ public class DependencyAnalysisTools {
         response.put("scope", "service");
         response.put("project", indexStatus.context().displayName());
         response.put("data", data);
-        response.put("warnings", List.of());
+        response.put("warnings", warnings);
         response.put("truncated", false);
         return jsonResult(response, false);
+    }
+
+    private List<String> stalenessWarnings() {
+        if (syncLifecycleService == null || !syncLifecycleService.hasPendingUpdates()) {
+            return List.of();
+        }
+        return List.of(GeneralConstant.ERROR_INDEX_STALE);
     }
 
     private McpSchema.CallToolResult structuredError(String code, String message) {
