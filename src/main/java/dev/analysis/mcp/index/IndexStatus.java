@@ -11,6 +11,7 @@ import java.time.Instant;
  * @param revision number of successfully published index revisions
  * @param startedAt time the most recent indexing attempt began
  * @param completedAt time the most recent indexing attempt ended
+ * @param lastSyncAt time the most recent incremental synchronization completed
  * @param statistics counts from the most recently completed successful index
  * @param lastError failure message from the most recent failed attempt, if any
  */
@@ -20,6 +21,7 @@ public record IndexStatus(
         long revision,
         Instant startedAt,
         Instant completedAt,
+        Instant lastSyncAt,
         IndexStatistics statistics,
         String lastError) {
 

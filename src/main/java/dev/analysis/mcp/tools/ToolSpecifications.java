@@ -69,7 +69,8 @@ public final class ToolSpecifications {
                 specification(GeneralConstant.TOOL_TRACE_DEPENDENCY_CHAIN, GeneralConstant.TOOL_TRACE_DEPENDENCY_CHAIN_DESC, chainSchema, tools::traceDependencyChain),
                 specification(GeneralConstant.TOOL_ALL_CLASSES, GeneralConstant.TOOL_ALL_CLASSES_DESC, noArgSchema, tools::getAllClasses),
                 specification(GeneralConstant.TOOL_INDEX_PROJECT, GeneralConstant.TOOL_INDEX_PROJECT_DESC, indexSchema, tools::indexProject),
-                specification(GeneralConstant.TOOL_INDEX_STATUS, GeneralConstant.TOOL_INDEX_STATUS_DESC, statusSchema, tools::indexStatus));
+                specification(GeneralConstant.TOOL_INDEX_STATUS, GeneralConstant.TOOL_INDEX_STATUS_DESC, statusSchema, tools::indexStatus),
+                specification(GeneralConstant.TOOL_SYNC_PROJECT, GeneralConstant.TOOL_SYNC_PROJECT_DESC, statusSchema, tools::syncProject));
     }
 
     /** Creates an object-shaped JSON schema for a tool's argument object. */

@@ -35,6 +35,7 @@ public class InMemoryIndexLifecycleService {
     private long revision;
     private Instant startedAt;
     private Instant completedAt;
+    private Instant lastSyncAt;
     private IndexStatistics statistics;
     private String lastError;
 
@@ -71,12 +72,7 @@ public class InMemoryIndexLifecycleService {
         return currentStatus();
     }
 
-    /**
-     * Runs a complete synchronous index unless a ready snapshot may be reused.
-     *
-     * @param force whether to rebuild even when the current index is ready
-     * @return the operation outcome and resulting status
-     */
+    /** Runs a complete synchronous index unless a ready snapshot may be reused. */
     public synchronized IndexOperationResult index(boolean force) {
         if (state == IndexState.READY && !force) {
             return new IndexOperationResult(currentStatus(), true, true);
@@ -90,10 +86,10 @@ public class InMemoryIndexLifecycleService {
             Set<JavaDependencyParser.DependencyEdge> dependencies = parser.parse(context.rootPath(), javaFiles);
             Graph<String, DefaultEdge> graph = graphBuilder.build(dependencies);
 
-            // Publish only a fully built graph. A later index failure therefore cannot replace it.
             graphService.setGraph(graph);
             revision++;
             statistics = new IndexStatistics(javaFiles.size(), graph.vertexSet().size(), graph.edgeSet().size());
+            lastSyncAt = Instant.now();
             completedAt = Instant.now();
             state = IndexState.READY;
             return new IndexOperationResult(currentStatus(), false, true);
@@ -112,6 +108,8 @@ public class InMemoryIndexLifecycleService {
     }
 
     private IndexStatus currentStatus() {
-        return new IndexStatus(context, state, revision, startedAt, completedAt, statistics, lastError);
+        return new IndexStatus(
+                context, state, revision, startedAt, completedAt, lastSyncAt, statistics, lastError);
     }
+
 }

@@ -53,9 +53,18 @@ class IndexingToolsTest {
     }
 
     @Test
+    void syncProjectReturnsErrorWhenSyncLifecycleNotConfigured() {
+        McpSchema.CallToolResult result = tools.syncProject(null, Map.of());
+        assertTrue(result.isError());
+        assertTrue(result.content().get(0).toString().contains("Sync lifecycle is not configured"));
+    }
+
+    @Test
     void lifecycleToolsRejectAnotherContextOrProjectPath() {
         assertTrue(tools.indexStatus(null, Map.of("contextId", "other-context")).isError());
         assertTrue(tools.indexProject(null, Map.of("projectPath", context.rootPath().resolve("other").toString())).isError());
+        assertTrue(tools.syncProject(null, Map.of("contextId", "other-context")).isError());
+        assertTrue(tools.syncProject(null, Map.of("projectPath", context.rootPath().resolve("other").toString())).isError());
     }
 
     @Test
@@ -64,5 +73,7 @@ class IndexingToolsTest {
                 specification.tool().name().equals("index_project")));
         assertTrue(ToolSpecifications.create(tools).stream().anyMatch(specification ->
                 specification.tool().name().equals("index_status")));
+        assertTrue(ToolSpecifications.create(tools).stream().anyMatch(specification ->
+                specification.tool().name().equals("sync_project")));
     }
 }
